@@ -1185,7 +1185,7 @@
     "selectedAgents": "Ausgewählte Agenten",
     "required": "Erforderlich",
     "agentNames": {
-      "default-1": "KI-Lehrkraft",
+      "default-1": "SangAI",
       "default-2": "KI-Assistent",
       "default-3": "Klassenclown",
       "default-4": "Neugieriger Geist",

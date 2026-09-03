@@ -1185,7 +1185,7 @@
     "selectedAgents": "Agentes seleccionados",
     "required": "Obligatorio",
     "agentNames": {
-      "default-1": "Maestro IA",
+      "default-1": "SangAI",
       "default-2": "Asistente IA",
       "default-3": "Payaso del salón",
       "default-4": "Mente curiosa",

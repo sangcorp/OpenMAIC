@@ -1185,7 +1185,7 @@
     "selectedAgents": "선택된 에이전트",
     "required": "필수",
     "agentNames": {
-      "default-1": "AI 선생님",
+      "default-1": "SangAI",
       "default-2": "AI 보조 선생님",
       "default-3": "분위기 메이커",
       "default-4": "호기심 왕",

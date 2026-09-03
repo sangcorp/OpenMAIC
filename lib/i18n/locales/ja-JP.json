@@ -1185,7 +1185,7 @@
     "selectedAgents": "選択中のエージェント",
     "required": "必須",
     "agentNames": {
-      "default-1": "AI教師",
+      "default-1": "SangAI",
       "default-2": "AIアシスタント",
       "default-3": "ムードメーカー",
       "default-4": "好奇心旺盛くん",

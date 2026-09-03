@@ -1185,7 +1185,7 @@
     "selectedAgents": "Agents sélectionnés",
     "required": "Obligatoire",
     "agentNames": {
-      "default-1": "Professeur IA",
+      "default-1": "SangAI",
       "default-2": "Assistant IA",
       "default-3": "Le boute-en-train",
       "default-4": "L’esprit curieux",

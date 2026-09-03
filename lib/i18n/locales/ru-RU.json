@@ -1185,7 +1185,7 @@
     "selectedAgents": "Выбранные агенты",
     "required": "Обязательно",
     "agentNames": {
-      "default-1": "AI-учитель",
+      "default-1": "SangAI",
       "default-2": "AI-ассистент",
       "default-3": "Весельчак",
       "default-4": "Почемучка",
