@@ -31,7 +31,7 @@ import '@fontsource-variable/inter';
 export const metadata: Metadata = {
   title: 'SangAI Classroom',
   description:
-    'The open-source AI interactive classroom. Upload a PDF to instantly generate an immersive, multi-agent learning experience.',
+    'An AI interactive classroom. Upload a PDF to instantly generate an immersive, multi-agent learning experience.',
 };
 
 export default function RootLayout({
