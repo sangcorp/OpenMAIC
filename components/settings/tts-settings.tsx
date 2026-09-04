@@ -225,6 +225,8 @@ export function TTSSettings({ selectedProviderId }: TTSSettingsProps) {
       case 'openai-tts':
       case 'glm-tts':
       case 'lemonade-tts':
+      case 'piper-tts':
+      case 'supertonic-tts':
         return '/audio/speech';
       case 'azure-tts':
         return '/cognitiveservices/v1';

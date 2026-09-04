@@ -1067,6 +1067,57 @@ export const TTS_PROVIDERS: Record<BuiltInTTSProviderId, TTSProviderConfig> = {
     supportedFormats: ['wav'],
     speedRange: { min: 0.25, max: 4.0, default: 1.0 },
   },
+
+  // Piper (javis/speech/server.py, OpenAI-compatible /v1/audio/speech). `model`
+  // is accepted and ignored server-side — the `voice` id IS the piper .onnx
+  // voice to load, so voice ids below are exactly what /v1/models reports.
+  // Only WAV/PCM are supported; the server rejects mp3.
+  'piper-tts': {
+    id: 'piper-tts',
+    name: 'Piper (local)',
+    requiresApiKey: false,
+    defaultBaseUrl: 'http://127.0.0.1:9141/v1',
+    icon: '/logos/piper.svg',
+    models: [{ id: 'piper', name: 'Piper' }],
+    defaultModelId: 'piper',
+    voices: [
+      { id: 'en_GB-northern_english_male-medium', name: 'Northern English (Male)', language: 'en-GB', gender: 'male' },
+      { id: 'vi_VN-25hours_single-low', name: '25hours (Single)', language: 'vi-VN', gender: 'neutral' },
+      { id: 'vi_VN-giong_nu_pho_thong-medium', name: 'Giọng Nữ Phổ Thông', language: 'vi-VN', gender: 'female' },
+      { id: 'vi_VN-thanh_nien_tu_tin-medium', name: 'Thanh Niên Tự Tin', language: 'vi-VN', gender: 'male' },
+      { id: 'vi_VN-vais1000-medium', name: 'VAIS1000', language: 'vi-VN', gender: 'neutral' },
+    ],
+    supportedFormats: ['wav'],
+    speedRange: { min: 0.25, max: 4.0, default: 1.0 },
+  },
+
+  // Supertonic (audio/supertonic, upstream's own `supertonic serve`,
+  // OpenAI-compatible /v1/audio/speech). `model` MUST match the loaded model
+  // id reported by /v1/health ("supertonic-3") — unlike Piper it is not
+  // ignored. Voice ids are the built-in style names from /v1/styles.
+  'supertonic-tts': {
+    id: 'supertonic-tts',
+    name: 'Supertonic (local)',
+    requiresApiKey: false,
+    defaultBaseUrl: 'http://127.0.0.1:7861/v1',
+    icon: '/logos/supertonic.svg',
+    models: [{ id: 'supertonic-3', name: 'Supertonic 3' }],
+    defaultModelId: 'supertonic-3',
+    voices: [
+      { id: 'F1', name: 'Female 1', language: 'en-US', gender: 'female' },
+      { id: 'F2', name: 'Female 2', language: 'en-US', gender: 'female' },
+      { id: 'F3', name: 'Female 3', language: 'en-US', gender: 'female' },
+      { id: 'F4', name: 'Female 4', language: 'en-US', gender: 'female' },
+      { id: 'F5', name: 'Female 5', language: 'en-US', gender: 'female' },
+      { id: 'M1', name: 'Male 1', language: 'en-US', gender: 'male' },
+      { id: 'M2', name: 'Male 2', language: 'en-US', gender: 'male' },
+      { id: 'M3', name: 'Male 3', language: 'en-US', gender: 'male' },
+      { id: 'M4', name: 'Male 4', language: 'en-US', gender: 'male' },
+      { id: 'M5', name: 'Male 5', language: 'en-US', gender: 'male' },
+    ],
+    supportedFormats: ['wav'],
+    speedRange: { min: 0.7, max: 2.0, default: 1.0 },
+  },
 };
 
 /**
@@ -1343,6 +1394,8 @@ export const DEFAULT_TTS_VOICES: Record<BuiltInTTSProviderId, string> = {
   'elevenlabs-tts': 'EXAVITQu4vr4xnSDxMaL',
   'minimax-tts': 'female-yujie',
   'lemonade-tts': 'af_heart',
+  'piper-tts': 'en_GB-northern_english_male-medium',
+  'supertonic-tts': 'M1',
   'browser-native-tts': 'default',
 };
 
@@ -1356,6 +1409,8 @@ export const DEFAULT_TTS_MODELS: Record<BuiltInTTSProviderId, string> = {
   'elevenlabs-tts': 'eleven_multilingual_v2',
   'minimax-tts': 'speech-2.8-hd',
   'lemonade-tts': 'kokoro-v1',
+  'piper-tts': 'piper',
+  'supertonic-tts': 'supertonic-3',
   'browser-native-tts': '',
 };
 

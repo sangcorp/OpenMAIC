@@ -47,7 +47,12 @@ import { listUserSkills } from './user-skills';
 const log = createLogger('AgentSkills');
 
 /** Where skills live. Overridable so a deployment can mount its own set. */
-export const skillsDir = agentRuntimeConfig.skillsDir;
+export const skillsDirs =
+  'skillsDirs' in agentRuntimeConfig && Array.isArray(agentRuntimeConfig.skillsDirs)
+    ? agentRuntimeConfig.skillsDirs
+    : [agentRuntimeConfig.skillsDir];
+/** The first root remains exported for compatibility with existing callers. */
+export const skillsDir = skillsDirs[0]!;
 
 /** The machine-checkable half of a skill. Every field is optional. */
 export interface OutlineConstraints {
@@ -169,41 +174,56 @@ function virtualSkillFile(skill: {
 /** Load builtin filesystem skills once; database skills remain owner-scoped and live. */
 async function listBuiltinSkills(): Promise<LoadedSkill[]> {
   if (builtinCache) return builtinCache;
-  if (!existsSync(skillsDir)) return (builtinCache = []);
+  const loadedByRoot = await Promise.all(
+    skillsDirs
+      .filter((root) => existsSync(root))
+      .map(async (root) => {
+        const posixSkillsDir = toPosixPath(root);
+        const env = new PosixNormalizingEnv({ cwd: posixSkillsDir });
+        const result = await loadSkills(env, posixSkillsDir);
+        for (const d of result.diagnostics) {
+          log.warn(`${d.code}: ${d.message} (${d.path})`);
+        }
+        return result.skills;
+      }),
+  );
 
-  const posixSkillsDir = toPosixPath(skillsDir);
-  const env = new PosixNormalizingEnv({ cwd: posixSkillsDir });
-  const { skills, diagnostics } = await loadSkills(env, posixSkillsDir);
-  for (const d of diagnostics) {
-    log.warn(`${d.code}: ${d.message} (${d.path})`);
-  }
-
-  builtinCache = skills.map((skill: Skill) => {
-    // The constraint file is a sibling of SKILL.md. Deliberately a separate
-    // file rather than more frontmatter: the frontmatter is the model-visible
-    // contract, this is the checker's, and mixing them means every schema
-    // tweak edits the thing the model reads.
-    const constraintsPath = join(dirname(skill.filePath), 'outline-constraints.json');
-    let constraints: OutlineConstraints | null = null;
-    if (existsSync(constraintsPath)) {
-      try {
-        constraints = JSON.parse(readFileSync(constraintsPath, 'utf8')) as OutlineConstraints;
-      } catch (err) {
-        log.warn(`unparseable ${constraintsPath}: ${String(err)}`);
+  const seen = new Set<string>();
+  builtinCache = loadedByRoot
+    .flatMap((skills) => skills)
+    .flatMap((skill: Skill) => {
+      if (seen.has(skill.name)) {
+        log.warn(`duplicate skill id '${skill.name}' ignored from ${skill.filePath}`);
+        return [];
       }
-    }
-    const title = readSkillTitle(skill.filePath);
-    return {
-      id: skill.name,
-      name: skill.name,
-      ...(title ? { title } : {}),
-      description: skill.description,
-      content: skill.content,
-      filePath: skill.filePath,
-      constraints,
-      source: 'builtin' as const,
-    };
-  });
+      seen.add(skill.name);
+      // The constraint file is a sibling of SKILL.md. Deliberately a separate
+      // file rather than more frontmatter: the frontmatter is the model-visible
+      // contract, this is the checker's, and mixing them means every schema
+      // tweak edits the thing the model reads.
+      const constraintsPath = join(dirname(skill.filePath), 'outline-constraints.json');
+      let constraints: OutlineConstraints | null = null;
+      if (existsSync(constraintsPath)) {
+        try {
+          constraints = JSON.parse(readFileSync(constraintsPath, 'utf8')) as OutlineConstraints;
+        } catch (err) {
+          log.warn(`unparseable ${constraintsPath}: ${String(err)}`);
+        }
+      }
+      const title = readSkillTitle(skill.filePath);
+      return [
+        {
+          id: skill.name,
+          name: skill.name,
+          ...(title ? { title } : {}),
+          description: skill.description,
+          content: skill.content,
+          filePath: skill.filePath,
+          constraints,
+          source: 'builtin' as const,
+        },
+      ];
+    });
   return builtinCache;
 }
 

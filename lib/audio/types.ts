@@ -89,6 +89,8 @@ export type BuiltInTTSProviderId =
   | 'elevenlabs-tts'
   | 'minimax-tts'
   | 'lemonade-tts'
+  | 'piper-tts'
+  | 'supertonic-tts'
   | 'browser-native-tts';
 
 export type TTSProviderId = BuiltInTTSProviderId | `custom-tts-${string}`;

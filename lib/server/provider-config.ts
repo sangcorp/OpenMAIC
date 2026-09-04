@@ -93,6 +93,8 @@ const TTS_ENV_MAP: Record<string, string> = {
   TTS_DOUBAO: 'doubao-tts',
   TTS_ELEVENLABS: 'elevenlabs-tts',
   TTS_MINIMAX: 'minimax-tts',
+  TTS_PIPER: 'piper-tts',
+  TTS_SUPERTONIC: 'supertonic-tts',
   TTS_LEMONADE: 'lemonade-tts',
 };
 
@@ -512,7 +514,7 @@ function buildConfig(yamlData: YamlData): ServerConfig {
   return {
     providers,
     tts: loadEnvSection(TTS_ENV_MAP, yamlData.tts, {
-      keylessProviders: new Set(['voxcpm-tts', 'lemonade-tts']),
+      keylessProviders: new Set(['voxcpm-tts', 'lemonade-tts', 'piper-tts', 'supertonic-tts']),
     }),
     asr: loadEnvSection(ASR_ENV_MAP, yamlData.asr, {
       keylessProviders: new Set(['funasr-asr', 'lemonade-asr']),

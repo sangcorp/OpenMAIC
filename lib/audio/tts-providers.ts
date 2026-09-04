@@ -94,7 +94,12 @@
 
 import type { TTSModelConfig } from './types';
 import { isCustomTTSProvider } from './types';
-import { isQwenCloneVoice, resolveTTSModelForVoice, TTS_PROVIDERS } from './constants';
+import {
+  DEFAULT_TTS_VOICES,
+  isQwenCloneVoice,
+  resolveTTSModelForVoice,
+  TTS_PROVIDERS,
+} from './constants';
 import { downloadAudio, QwenVoiceCloneError, synthesizeQwenVoiceClone } from './qwen-voice-clone';
 import { evictQwenVoiceRegistrationMemo } from './qwen-voice-clone-registration';
 import { splitConcatenatedJsonObjects } from './json-stream';
@@ -243,6 +248,12 @@ export async function generateTTS(
       case 'lemonade-tts':
         return await generateLemonadeTTS(config, text, signal);
 
+      case 'piper-tts':
+        return await generatePiperTTS(config, text, signal);
+
+      case 'supertonic-tts':
+        return await generateSupertonicTTS(config, text, signal);
+
       case 'browser-native-tts':
         throw new Error(
           'Browser Native TTS must be handled client-side using Web Speech API. This provider cannot be used on the server.',
@@ -343,6 +354,96 @@ async function generateLemonadeTTS(
   if (!response.ok) {
     throwIfTtsRateLimited('Lemonade', response.status);
     throw new Error(`Lemonade TTS API error: ${await readTTSApiError(response)}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const contentType = response.headers.get('content-type') || '';
+  return {
+    audio: new Uint8Array(arrayBuffer),
+    format: getAudioResponseFormat(contentType),
+  };
+}
+
+/**
+ * Piper TTS implementation (javis/speech/server.py, OpenAI-compatible
+ * /v1/audio/speech). `model` is accepted and ignored server-side; `voice`
+ * selects the piper .onnx voice. Only wav/pcm are supported — mp3 4xxs.
+ */
+async function generatePiperTTS(
+  config: TTSModelConfig,
+  text: string,
+  signal: AbortSignal,
+): Promise<TTSGenerationResult> {
+  const baseUrl = (config.baseUrl || TTS_PROVIDERS['piper-tts'].defaultBaseUrl || '').replace(
+    /\/$/,
+    '',
+  );
+  const voice = config.voice || DEFAULT_TTS_VOICES['piper-tts'];
+
+  const response = await fetch(`${baseUrl}/audio/speech`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      ...getBackendAuthHeaders(config.apiKey),
+    },
+    body: JSON.stringify({
+      input: text,
+      voice,
+      speed: config.speed || 1.0,
+      response_format: 'wav',
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    throwIfTtsRateLimited('Piper', response.status);
+    throw new Error(`Piper TTS API error: ${await readTTSApiError(response)}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return {
+    audio: new Uint8Array(arrayBuffer),
+    format: 'wav',
+  };
+}
+
+/**
+ * Supertonic TTS implementation (audio/supertonic's own `supertonic serve`,
+ * OpenAI-compatible /v1/audio/speech). Unlike Piper, `model` must match the
+ * currently loaded model id (default "supertonic-3") — it is validated, not
+ * ignored. Voice is one of the builtin style names from /v1/styles (F1-F5,
+ * M1-M5 by default).
+ */
+async function generateSupertonicTTS(
+  config: TTSModelConfig,
+  text: string,
+  signal: AbortSignal,
+): Promise<TTSGenerationResult> {
+  const baseUrl = (config.baseUrl || TTS_PROVIDERS['supertonic-tts'].defaultBaseUrl || '').replace(
+    /\/$/,
+    '',
+  );
+  const modelId = config.modelId || TTS_PROVIDERS['supertonic-tts'].defaultModelId;
+  const voice = config.voice || DEFAULT_TTS_VOICES['supertonic-tts'];
+
+  const response = await fetch(`${baseUrl}/audio/speech`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      ...getBackendAuthHeaders(config.apiKey),
+    },
+    body: JSON.stringify({
+      model: modelId,
+      input: text,
+      voice,
+      speed: config.speed || 1.0,
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    throwIfTtsRateLimited('Supertonic', response.status);
+    throw new Error(`Supertonic TTS API error: ${await readTTSApiError(response)}`);
   }
 
   const arrayBuffer = await response.arrayBuffer();

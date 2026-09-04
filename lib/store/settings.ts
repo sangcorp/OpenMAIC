@@ -523,6 +523,18 @@ const getDefaultAudioConfig = () => ({
       modelId: 'kokoro-v1',
       enabled: true,
     },
+    'piper-tts': {
+      apiKey: '',
+      baseUrl: '',
+      modelId: 'piper',
+      enabled: true,
+    },
+    'supertonic-tts': {
+      apiKey: '',
+      baseUrl: '',
+      modelId: 'supertonic-3',
+      enabled: true,
+    },
     // Browser-native is OFF by default — fully opt-in. Native voice quality is
     // poor; it must never be a silent default (#665).
     'browser-native-tts': { apiKey: '', baseUrl: '', enabled: false },

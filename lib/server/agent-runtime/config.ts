@@ -1,6 +1,17 @@
 /** Server-only agent runtime configuration. */
+import { delimiter } from 'node:path';
+
 const numberFromEnv = (value: string | undefined, fallback: number) =>
   value ? Number(value) : fallback;
+
+const defaultSkillsDir = `${process.cwd()}/skills/agent-runtime`;
+const configuredSkillsDirs = (
+  process.env.OPENMAIC_AGENT_SKILLS_DIRS ?? process.env.OPENMAIC_AGENT_SKILLS_DIR
+)
+  ?.split(delimiter)
+  .map((dir) => dir.trim())
+  .filter(Boolean);
+const skillsDirs = configuredSkillsDirs?.length ? configuredSkillsDirs : [defaultSkillsDir];
 
 export const agentRuntimeConfig = {
   /** How often the runner scans for claimable sessions. */
@@ -41,7 +52,9 @@ export const agentRuntimeConfig = {
       : {}),
   },
   /** Directory skills are loaded from. Overridable so a deployment can mount its own set. */
-  skillsDir: process.env.OPENMAIC_AGENT_SKILLS_DIR ?? `${process.cwd()}/skills/agent-runtime`,
+  skillsDir: skillsDirs[0]!,
+  /** Multiple roots allow the app's skills and a live shared skill directory to coexist. */
+  skillsDirs,
   /** Audio/video upload safety ceiling; defaults to the same 50 MiB cap as documents/images. */
   maxUploadBytes: numberFromEnv(process.env.OPENMAIC_AGENT_MAX_UPLOAD_BYTES, 50 * 1024 * 1024),
   /** Document/image cap, aligned with the classic `/api/extract-document` route. */
