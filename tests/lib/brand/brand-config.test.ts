@@ -3,14 +3,14 @@ import { DEFAULT_BRAND } from '@/lib/brand/brand-config';
 
 describe('DEFAULT_BRAND (single-brand build)', () => {
   it('uses the original product identity for full chrome', () => {
-    expect(DEFAULT_BRAND.productName).toBe('OpenMAIC');
-    expect(DEFAULT_BRAND.shortName).toBe('OpenMAIC');
-    expect(DEFAULT_BRAND.markSrc).toBe('/openmaic-mark.png');
-    expect(DEFAULT_BRAND.themeColor).toBe('#722ed1');
+    expect(DEFAULT_BRAND.productName).toBe('SangAI');
+    expect(DEFAULT_BRAND.shortName).toBe('SangAI');
+    expect(DEFAULT_BRAND.markSrc).toBe('/sangai-mark.jpg');
+    expect(DEFAULT_BRAND.themeColor).toBe('#5b4bc4');
   });
 
   it('marks its horizontal logo as already containing the wordmark', () => {
     expect(DEFAULT_BRAND.logoHasWordmark).toBe(true);
-    expect(DEFAULT_BRAND.logoSrc).toBe('/logo-horizontal.png');
+    expect(DEFAULT_BRAND.logoSrc).toBe('/logo-horizontal.svg');
   });
 });
