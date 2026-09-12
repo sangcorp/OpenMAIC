@@ -63,7 +63,42 @@ async function fetchWithAllowedCallers(url: string, init?: RequestInit): Promise
       /* leave body unchanged if it can't be parsed */
     }
   }
-  return proxyFetch(url, init);
+  return normalizeRelayJsonResponse(await proxyFetch(url, init));
+}
+
+const SSE_TERMINATOR = /\s*data:\s*\[DONE\]\s*$/;
+
+/**
+ * Some OpenAI/Anthropic-compatible relays (a local gateway that aggregates the
+ * upstream stream on the client's behalf) answer a NON-streaming `/messages`
+ * call with the aggregated JSON message, but keep `content-type:
+ * text/event-stream` and append the SSE terminator `data: [DONE]`. The AI SDK
+ * then fails with "Invalid JSON response" although the answer is complete.
+ * Repair only that exact shape: an event-stream-typed 200 whose body is one
+ * JSON object optionally followed by the terminator. A genuine event stream
+ * (body starting with `event:`/`data:`) and every other response pass through
+ * untouched, so a real streaming call is never buffered here.
+ */
+async function normalizeRelayJsonResponse(response: Response): Promise<Response> {
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!response.ok || !contentType.includes('text/event-stream')) return response;
+  const text = await response.clone().text();
+  const trimmed = text.trimStart();
+  if (!trimmed.startsWith('{')) return response;
+  const candidate = trimmed.replace(SSE_TERMINATOR, '');
+  try {
+    JSON.parse(candidate);
+  } catch {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  headers.set('content-type', 'application/json');
+  headers.delete('content-length');
+  return new Response(candidate, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 /**

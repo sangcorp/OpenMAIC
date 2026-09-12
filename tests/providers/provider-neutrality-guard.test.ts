@@ -190,6 +190,8 @@ const TEMPORARY_VENDOR_DEBT: readonly AllowedVendorDebt[] = [
       ['elevenlabs', 2],
       ['whisper', 1],
       ['funasr', 3],
+      ['piper', 3],
+      ['supertonic', 3],
       ['unpdf', 2],
       ['mineru', 5],
       ['seedream', 2],

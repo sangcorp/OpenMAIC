@@ -291,6 +291,60 @@ describe('searchWithClaude', () => {
     );
   });
 
+  // ── relay response normalization ───────────────────────────────────────────
+
+  it('normalizes a relay JSON body mislabeled as an event stream with a trailing [DONE]', async () => {
+    // Some OpenAI/Anthropic relays (e.g. a local 9router gateway) answer a
+    // non-streaming /messages call by aggregating upstream SSE into one JSON
+    // object but keep `content-type: text/event-stream` and append the SSE
+    // terminator. @ai-sdk/anthropic then fails with "Invalid JSON response".
+    mockAIResponse();
+    await searchWithClaude({ query: 'q', apiKey: 'sk-test' });
+    const wrappedFetch = getWrappedFetch();
+
+    const message = {
+      id: 'msg_1',
+      type: 'message',
+      role: 'assistant',
+      content: [{ type: 'text', text: 'hi' }],
+      stop_reason: 'end_turn',
+    };
+    mockProxyFetch.mockResolvedValueOnce(
+      new Response(`${JSON.stringify(message)}data: [DONE]\n\n`, {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    );
+
+    const response = await wrappedFetch('https://relay.example/v1/messages', {
+      method: 'POST',
+      body: JSON.stringify({ model: 'm', messages: [] }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('application/json');
+    await expect(response.json()).resolves.toEqual(message);
+  });
+
+  it('passes a genuine event stream through untouched', async () => {
+    mockAIResponse();
+    await searchWithClaude({ query: 'q', apiKey: 'sk-test' });
+    const wrappedFetch = getWrappedFetch();
+
+    const sse = 'event: message_start\ndata: {"type":"message_start"}\n\n';
+    mockProxyFetch.mockResolvedValueOnce(
+      new Response(sse, { status: 200, headers: { 'content-type': 'text/event-stream' } }),
+    );
+
+    const response = await wrappedFetch('https://relay.example/v1/messages', {
+      method: 'POST',
+      body: JSON.stringify({ model: 'm', messages: [], stream: true }),
+    });
+
+    expect(response.headers.get('content-type')).toBe('text/event-stream');
+    await expect(response.text()).resolves.toBe(sse);
+  });
+
   // ── result mapping ─────────────────────────────────────────────────────────
 
   it('returns the answer and cited sources without fetching pages', async () => {
